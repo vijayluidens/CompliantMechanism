@@ -1,0 +1,115 @@
+clc
+clear
+close all
+
+syms theta2 theta2_0 L2 L3 K1 K2 K3 theta3_0 real
+
+
+theta3 = asin((L2 / L3) * sin(theta2));
+
+
+F_in = ...
+    K1 * (theta2 - theta2_0) * ...
+        (-cos(asin((L2 / L3) * sin(theta2))) / (L2 * sin(theta3 - theta2))) + ...
+    K2 * (((theta2 - theta2_0) - (theta3 - theta3_0)) * ...
+        (-cos(theta3) / (L2 * sin(theta3 - theta2))) + ...
+        cos(theta2) / (L3 * sin(theta3 - theta2))) + ...
+    K3 * ((theta3 - theta3_0) * -cos(theta2) / (L3 * sin(theta3)));
+
+F_in = subs(F_in,theta3,asin((L2 / L3) * sin(theta2)));
+
+disp(F_in);
+
+%Real values
+E = 185*10^9; %Youngs modulus of steel 
+l = 0.05; %length of compliant part
+w = 0.05; %width of the compliant part
+t = 0.0004; %Thickeness
+L2_real = 0.2;
+L3_real = 0.25;
+K1_real = (E*w*t^3)/(12*l);
+K2_real = K1_real;
+K3_real = K1_real;
+theta2_0_real = pi/10;
+theta3_0_real = asin(L2_real/L3_real*sin(theta2_0_real));
+
+F_in_real = subs(F_in,[K1 K2 K3 L2 L3 theta2_0 theta3_0], [K1_real K2_real K3_real L2_real L3_real theta2_0_real theta3_0_real]);
+
+%Plotting
+
+n = 101;
+theta2_real = linspace(theta2_0_real,pi/2,n);
+F_in_plot = zeros(n,1);
+
+for i = 1:length(theta2_real)
+
+    F_in_plot(i) = double(subs(F_in_real,theta2,theta2_real(i)));
+
+end
+theta2_real_degree = theta2_real*180/pi;
+figure(1)
+plot(theta2_real_degree,F_in_plot);
+grid on
+xlabel(['\theta_{2} [', char(176), ']'])
+ylabel('Input force required [N]')
+xlim([0 100]);
+
+W = trapz(theta2_real,F_in_plot)*L2_real*2;
+disp([num2str(W), ' J is the potential energy of the jumping robot'])
+
+
+%Stress calculations
+syms Phi real
+theta3_real = asin(L2_real/L3_real*sin(theta2_real));
+Phi2 = theta2_real - theta2_0_real;
+Phi3 = -(theta2_real - theta2_0_real) + (theta3_real - theta3_0_real);
+Phi1 = theta3_real - theta3_0_real;
+I = 1/12*w*t^3; 
+Q = (E*t*Phi)/(2*l)/10^6;
+
+%Stress at 1
+stress1 = zeros(1,n);
+for i = 1:n
+    stress1(i) = subs(Q,Phi,Phi1(i));
+
+end
+%Stress at 2
+stress2 = zeros(1,n);
+for i = 1:n
+   
+    stress2(i) = subs(Q,Phi,Phi2(i));
+
+end
+%Stress at 3
+stress3 = zeros(1,n);
+for i = 1:n
+    stress3(i) = subs(Q,Phi,Phi3(i));
+end
+
+stress = [stress1; stress2 ;stress3];
+Max_stress = max(stress,[],'all');
+disp(['The maximum stress is ' num2str(Max_stress) ' MPa'])
+
+figure(2)
+subplot(2,2,1)
+plot(Phi1,stress1)
+grid on 
+title('Stress 1')
+xlabel('\phi_1 [rad]')
+ylabel('Stress 1 [MPa]')
+subplot(2,2,2)
+plot(Phi2,stress2)
+grid on 
+title('Stress 2')
+xlabel('\phi_2 [rad]')
+ylabel('Stress 2 [MPa]')
+subplot(2,2,3)
+plot(Phi3,stress3)
+grid on 
+title('Stress 3')
+xlabel('\phi_3 [rad]')
+ylabel('Stress 3 [MPa]')
+
+
+
+
