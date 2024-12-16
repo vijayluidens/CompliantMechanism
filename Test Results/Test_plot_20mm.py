@@ -17,8 +17,8 @@ displacement = data.iloc[:, 0].to_numpy()  # First column
 force = data.iloc[:, 1].to_numpy()         # Second column
 prbm_displacement = data_2.iloc[:, 0].to_numpy()
 prbm_force = data_2.iloc[:, 1].to_numpy()
-apdl_displacement = data_3.iloc[:, 1].to_numpy()
-apdl_force = data_3.iloc[:, 3].to_numpy()
+apdl_displacement = data_3.iloc[:, 2].to_numpy()
+apdl_force = data_3.iloc[:, 0].to_numpy()
 
 
 # Determine the peak force, displacement & index
@@ -27,12 +27,12 @@ peak_force = np.max(force)
 peak_displacement = np.max(displacement)
 
 # PRBM Values
-prbm_peak_force = np.max(prbm_force)
+prbm_peak_force = 2*np.max(prbm_force)
 prbm_peak_displacement = np.max(prbm_displacement)
 
 #APDL Values
-apdl_peak_force = np.max(apdl_force)
-apdl_peak_displacement = np.max(apdl_displacement)
+apdl_peak_force = apdl_force[-1]
+apdl_peak_displacement = apdl_displacement[-1]
 
 # Ensure matching lengths for descending slice
 descending_displacement = displacement[peak_index:]
@@ -51,10 +51,10 @@ plt.plot(displacement[:peak_index+1], force[:peak_index+1], label='Test: Load Ph
 plt.plot(descending_displacement, descending_force, linestyle='dotted', linewidth=4, label='Test: Deload Phase')
 
 # Plot data from the prbm file
-plt.plot(data_2['Deflection_X_mm'], data_2['Force_N'], label='PRBM Results', linewidth=4, linestyle = 'dashed')
+plt.plot(data_2['Deflection_X_mm'], 2*data_2['Force_N'], label='PRBM Results', linewidth=4, linestyle = 'dashed')
 
 # Plot data from the APDL file
-plt.plot(data_3['Displacement (mm)'], data_3['Reaction_Force_2_Flextures (N)'], label='APDL Results', linewidth=4)
+plt.plot(data_3['Displacement (mm)'], data_3['Reaction Force'], label='APDL Results', linewidth=4)
 
 # Customize plot
 plt.title('Force vs Displacement', fontsize=14)
@@ -71,15 +71,16 @@ plt.ylim(0, peak_force + 6)  # Extend y-axis slightly beyond the last point
 
 # Plot dot at maximum force value
 plt.scatter(peak_displacement, peak_force, color='red', zorder=5)
-plt.text(np.round(peak_displacement)-1, peak_force+1, f'({np.round(peak_displacement)}, {np.round(peak_force)})', fontsize=12)
+plt.text(np.round(peak_displacement)-1, peak_force-3, f'({np.round(peak_displacement)}, {np.round(peak_force)})', fontsize=12)
 
 # Plot dot at maximum force value: prbm
 plt.scatter(prbm_peak_displacement, prbm_peak_force, color='blue', zorder=5)
-plt.text(np.round(prbm_peak_displacement)-1, prbm_peak_force -2.5, f'({np.round(prbm_peak_displacement)}, {np.round(prbm_peak_force)})', fontsize=12)
+plt.text(np.round(prbm_peak_displacement)-1, prbm_peak_force -3.5, f'({np.round(prbm_peak_displacement)}, {np.round(prbm_peak_force)})', fontsize=12)
 
-# Plot dot at maximum force value: prbm
-plt.scatter(apdl_peak_displacement, apdl_peak_force, color='green', zorder=5)
-plt.text(np.round(apdl_peak_displacement)-1, apdl_peak_force +1, f'({np.round(apdl_peak_displacement)}, {np.round(apdl_peak_force)})', fontsize=12)
+# Plot dot at maximum force value: APDL
+plt.scatter(20.0, 25.1, color='blue', zorder=5)
+plt.text(19,22.1, f'({20}, {25.1})', fontsize=12)
+
 
 #Show Plot
 plt.show()
