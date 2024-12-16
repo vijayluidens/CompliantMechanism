@@ -1,98 +1,96 @@
-clear; clc; % Define symbolic variables
-syms S1 K1 K2 K3 real
+clear; clc; % Clear workspace and command window
+
+% Define symbolic variables
+syms X K1 K2 K3 real
 
 % Define parameters
-L = 50; % Length of the link in mm
-L_flexture = 50;
-E = 200;
-t = 0.2;
-w = 10 ;
-theta2_0 = deg2rad(18); % Initial angle in radians (18 degrees)
-theta3_0 = 2*pi - theta2_0; % Initial angle for theta3
-S_initial = 2 * L * cos(theta2_0); % Initial value of S1 based on theta2_0
+L = 125; % Length of the link in mm
+L_flexure = 50; % Length of the flexure
+E = 200; % Young's modulus (assumed units consistent with inputs)
+t = 0.4; % Thickness in mm
+w = 30; % Width in mm
+theta_20 = deg2rad(18); % Initial angle theta_2 in radians (18 degrees)
+theta_30 = 2*pi - theta_20; % Initial angle theta_3
+X_initial = 2 * L * cos(theta_20); % Initial value of X based on theta_20
 
-% Define the range of S1 within valid bounds
-S1_range = linspace(S_initial, S_initial-20, 10);
+% Define the range of X within valid bounds
+X_range = linspace(X_initial, X_initial - 20, 10);
 
-% Calculate theta2 and theta3 as functions of S1
-theta2_formula = acos(S1 / (2 * L));
-theta3_formula = 2*pi - theta2_formula;
+% Calculate theta_2 and theta_3 as functions of X
+theta_2_formula = acos(X / (2 * L));
+theta_3_formula = 2*pi - theta_2_formula;
 
-% Calculate dtheta2/dS1 and dtheta3/dS1 using the given relation
-dtheta2_dS1 = 1 / (2 * L * sin(theta2_formula));
-dtheta3_dS1 = -1 / (2 * L * sin(theta2_formula));
+% Calculate d(theta_2)/dX and d(theta_3)/dX:
+dtheta_2_dX = 1 / (2 * L * sin(theta_2_formula));
+dtheta_3_dX = -1 / (2 * L * sin(theta_2_formula));
 
 % Define phi values relative to initial conditions
-phi1 = theta2_formula - theta2_0;
-phi2 = (theta3_formula - theta3_0) - (theta2_formula - theta2_0);
-phi3 = theta3_formula - theta3_0;
+phi1 = theta_2_formula - theta_20;
+phi2 = (theta_3_formula - theta_30) - (theta_2_formula - theta_20);
+phi3 = theta_3_formula - theta_30;
 
-% Increase spring constants to match the scale in the target plot
-
-K = (E)*(t*w^3/12)/(L_flexture);
+% Calculate spring constants
+K = (E) * (t * w^3 / 12) / (L_flexure); % Simplified flexure stiffness equation
 K1 = K;
 K2 = K;
 K3 = K;
 
-% Substitute constants into the force calculation
-Force_expr = phi1 * K1 * dtheta2_dS1 + phi2 * K2 * (dtheta3_dS1 - dtheta2_dS1) + phi3 * K3 * dtheta3_dS1;
+% Force expression
+Force_expr = phi1 * K1 * dtheta_2_dX + phi2 * K2 * (dtheta_3_dX - dtheta_2_dX) + phi3 * K3 * dtheta_3_dX;
 
-% Calculate the initial force when S1 = S_initial
-Initial_force = double(subs(Force_expr, S1, S_initial));
+% Calculate the initial force when X = X_initial
+Initial_force = double(subs(Force_expr, X, X_initial));
 
 % Pre-allocate arrays
-theta2_values = zeros(size(S1_range));
-theta3_values = zeros(size(S1_range));
-force_values = zeros(size(S1_range));
+theta_2_values = zeros(size(X_range));
+theta_3_values = zeros(size(X_range));
+force_values = zeros(size(X_range));
 
-% Loop through each S1 value
-for i = 1:length(S1_range)
-    S1_value = S1_range(i); % Current S1 value
+% Loop through each X value
+for i = 1:length(X_range)
+    X_value = X_range(i); % Current X value
 
-    % Substitute S1 into the expressions
-    Force_sub_S1 = subs(Force_expr, S1, S1_value);
-    
-    % Evaluate theta2 and theta3
-    theta2_values(i) = double(subs(theta2_formula, S1, S1_value));
-    theta3_values(i) = double(subs(theta3_formula, S1, S1_value));
-    
-    % Try evaluating the force and subtract the initial force
-    force_values(i) = double(vpa(Force_sub_S1, 10)) - Initial_force;
+    % Substitute X into the expressions
+    Force_sub_X = subs(Force_expr, X, X_value);
+
+    % Evaluate theta_2 and theta_3
+    theta_2_values(i) = double(subs(theta_2_formula, X, X_value));
+    theta_3_values(i) = double(subs(theta_3_formula, X, X_value));
+
+    % Evaluate force and subtract the initial force
+    force_values(i) = double(vpa(Force_sub_X, 10)) - Initial_force;
 end
 
 % Plot Force-Deflection graph
 figure;
-plot(-(S1_range - S_initial), force_values, '--sm'); % Invert the displacement values
-xlabel('Deflection S1 (mm)');
+plot(-(X_range - X_initial), force_values, '--sm'); % Invert the displacement values
+xlabel('Deflection X (mm)');
 ylabel('Force (N)');
 title('Force-Deflection Graph');
 ylim([0 inf]); % Set y-axis minimum to 0
 grid on;
 
 % Display results
-disp('Theta2 values (deg):');
-disp(rad2deg(theta2_values));
-disp('Theta3 values (deg):');
-disp(rad2deg(theta3_values));
+disp('Theta_2 values (deg):');
+disp(rad2deg(theta_2_values));
+disp('Theta_3 values (deg):');
+disp(rad2deg(theta_3_values));
 disp('Force values (N):');
 disp(force_values);
 
 % Define data for export
-Deflection_S1 = -(S1_range - S_initial); % Inverted displacement values
+Deflection_X = -(X_range - X_initial); % Inverted displacement values
 Force = force_values;               % Scaled forces
-Theta2_deg = rad2deg(theta2_values);    % Convert theta2 to degrees
-Theta3_deg = rad2deg(theta3_values);    % Convert theta3 to degrees
+Theta2_deg = rad2deg(theta_2_values);    % Convert theta_2 to degrees
+Theta3_deg = rad2deg(theta_3_values);    % Convert theta_3 to degrees
 
 % Combine data into a table
-plot_data = table(Deflection_S1', Force', Theta2_deg', Theta3_deg', ...
-    'VariableNames', {'Deflection_S1_mm', 'Force_N', 'Theta2_deg', 'Theta3_deg'});
+plot_data = table(Deflection_X', Force', Theta2_deg', Theta3_deg', ...
+    'VariableNames', {'Deflection_X_mm', 'Force_N', 'Theta2_deg', 'Theta3_deg'});
 
 % Export data to an Excel file
-filename = 'PRBM - Force_Deflection_Data.xlsx'; % Specify the file name
+filename = 'Force_Deflection_Data.xlsx'; % Specify the file name
 writetable(plot_data, filename);
-
-% Notify user
-disp(['Plot data has been successfully exported to ', filename]);
 
 % Pre-calculate constants for stress calculations
 C = t / 2; % Distance from neutral axis to the surface
@@ -108,46 +106,39 @@ sigma_1 = M_1 * C / I_value;
 sigma_2 = M_2 * C / I_value;
 sigma_3 = M_3 * C / I_value;
 
-% Evaluate stresses over the range of S1
-sigma_1_values = zeros(size(S1_range));
-sigma_2_values = zeros(size(S1_range));
-sigma_3_values = zeros(size(S1_range));
+% Evaluate stresses over the range of X
+sigma_1_values = zeros(size(X_range));
+sigma_2_values = zeros(size(X_range));
+sigma_3_values = zeros(size(X_range));
 
-for i = 1:length(S1_range)
-    S1_value = S1_range(i)
-    
-    % Substitute S1 into the updated phi relations
-    phi1_current = subs(phi1, S1, S1_value);
-    phi2_current = subs(phi2, S1, S1_value);
-    phi3_current = subs(phi3, S1, S1_value);
-    
+for i = 1:length(X_range)
+    X_value = X_range(i);
+
+    % Substitute X into the updated phi relations
+    phi1_current = subs(phi1, X, X_value);
+    phi2_current = subs(phi2, X, X_value);
+    phi3_current = subs(phi3, X, X_value);
+
     % Update moments
-    M_1_current = double(subs(M_1, S1, S1_value));
-    M_2_current = double(subs(M_2, S1, S1_value));
-    M_3_current = double(subs(M_3, S1, S1_value));
-    
+    M_1_current = double(subs(M_1, X, X_value));
+    M_2_current = double(subs(M_2, X, X_value));
+    M_3_current = double(subs(M_3, X, X_value));
+
     % Calculate stresses
     sigma_1_values(i) = double(M_1_current * C / I_value);
     sigma_2_values(i) = double(M_2_current * C / I_value);
     sigma_3_values(i) = double(M_3_current * C / I_value);
 end
 
-% Plot stress vs. Theta 2
+% Plot stress vs. Theta_2
 figure;
-plot(rad2deg(theta2_values), abs(sigma_1_values), 'r', 'DisplayName', '\sigma_1');
+plot(rad2deg(theta_2_values), abs(sigma_1_values), 'r', 'DisplayName', '\sigma_1');
 hold on;
-plot(rad2deg(theta2_values), sigma_2_values, 'g', 'DisplayName', '\sigma_2');
-plot(rad2deg(theta2_values), sigma_3_values, 'b', 'DisplayName', '\sigma_3');
-xlabel('Theta2 (degrees)');
+plot(rad2deg(theta_2_values), sigma_2_values, 'g', 'DisplayName', '\sigma_2');
+plot(rad2deg(theta_2_values), sigma_3_values, 'b', 'DisplayName', '\sigma_3');
+xlabel('Theta_2 (degrees)');
 ylabel('Stress (Pa)');
-title('Stress vs. Theta2');
+title('Stress vs. Theta_2');
 legend('show');
 grid on;
-
-% Notify user
-disp('Stress vs. Theta2 plot successfully generated.');
-
-
-
-
 

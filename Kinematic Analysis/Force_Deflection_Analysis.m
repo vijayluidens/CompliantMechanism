@@ -32,12 +32,12 @@ disp(F_in);
 % These are the physical parameters of the system
 E = 190e9; % Young's modulus of Steel in Pascals (Pa)
 l = 0.05; % Length of the compliant part (meters)
-w = 0.05; % Width of the compliant part (meters)
-t = 0.005; % Thickness of the compliant part (meters)
+w = 0.03; % Width of the compliant part (meters)
+t = 0.004; % Thickness of the compliant part (meters)
 
 % Real values for lengths and spring constants
-L2_real = 0.2; % Length L2 (meters)
-L3_real = 0.25; % Length L3 (meters)
+L2_real = 0.1; % Length L2 (meters)
+L3_real = 0.125; % Length L3 (meters)
 K1_real = (E * w * t^3) / (12 * l); % Spring constant K1 (N/rad)
 K2_real = K1_real; % Assume K2 = K1
 K3_real = K1_real; % Assume K3 = K1
